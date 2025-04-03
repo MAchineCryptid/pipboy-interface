@@ -12,6 +12,9 @@ WIDTH, HEIGHT = 800, 480
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Raspberry Pi Pip-Boy")
 
+# Create a surface for screen content
+screen_content = pygame.Surface((WIDTH, HEIGHT - 40))
+
 # Colors
 GREEN = (57, 255, 20)
 BLACK = (0, 0, 0)
@@ -36,9 +39,6 @@ previous_screen = STATUS_SCREEN
 
 # Define the tabs
 tabs = ["STATUS", "WIKI", "GPS", "RADIO"]
-
-# Create a surface for screen content (fix for NameError)
-screen_content = pygame.Surface((WIDTH, HEIGHT - 40))
 
 # Function to get CPU usage
 def get_cpu_usage():
@@ -143,8 +143,10 @@ def main():
             previous_screen = current_screen
             fade_in()
 
+        screen.fill(BLACK)  # Clear screen before drawing
         draw_tabs()
 
+        screen_content.fill(BLACK)  # Make sure content screen is cleared each frame
         if current_screen == STATUS_SCREEN:
             draw_status_screen()
         elif current_screen == WIKI_SCREEN:
