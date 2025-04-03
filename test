@@ -60,8 +60,12 @@ def draw_status_screen():
         battery_percent = battery.percent
         draw_text(f"Battery: {battery_percent}%", 50, 180, font_size=36, color=YELLOW)
     else:
-        power_usage = psutil.sensors_battery().power_plugged  # Check power draw
-        draw_text(f"Power Draw: {power_usage}W", 50, 180, font_size=36, color=YELLOW)
+        # If no battery, display power usage (plugged status)
+        power_plugged = psutil.sensors_battery() is not None and psutil.sensors_battery().power_plugged
+        if power_plugged:
+            draw_text(f"Power Draw: Active", 50, 180, font_size=36, color=YELLOW)
+        else:
+            draw_text(f"Power Draw: Inactive", 50, 180, font_size=36, color=YELLOW)
 
     # Draw Storage Space Available
     total, used, free = psutil.disk_usage('/')
