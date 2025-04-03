@@ -54,13 +54,13 @@ def draw_status_screen():
     cpu_usage = psutil.cpu_percent(interval=1)
     draw_text(f"CPU Usage: {cpu_usage}%", 50, 120, font_size=36, color=YELLOW)
 
-    # Draw Battery Status or Power Draw
+    # Handle Battery Status or Power Draw
     battery = psutil.sensors_battery()
-    if battery:
+    if battery is not None:
         battery_percent = battery.percent
         draw_text(f"Battery: {battery_percent}%", 50, 180, font_size=36, color=YELLOW)
     else:
-        # If no battery, display power usage (plugged status)
+        # If no battery, display power plugged status
         power_plugged = psutil.sensors_battery() is not None and psutil.sensors_battery().power_plugged
         if power_plugged:
             draw_text(f"Power Draw: Active", 50, 180, font_size=36, color=YELLOW)
