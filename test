@@ -37,6 +37,9 @@ previous_screen = STATUS_SCREEN
 # Define the tabs
 tabs = ["STATUS", "WIKI", "GPS", "RADIO"]
 
+# Create a surface for screen content (fix for NameError)
+screen_content = pygame.Surface((WIDTH, HEIGHT - 40))
+
 # Function to get CPU usage
 def get_cpu_usage():
     return f"CPU: {psutil.cpu_percent()}%"
