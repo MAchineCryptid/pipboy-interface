@@ -35,16 +35,13 @@ RADIO_SCREEN = 3
 
 # Start on the STATUS screen
 current_screen = STATUS_SCREEN
-previous_screen = STATUS_SCREEN
 
 # Define the tabs
 tabs = ["STATUS", "WIKI", "GPS", "RADIO"]
 
-# Function to get CPU usage
 def get_cpu_usage():
     return f"CPU: {psutil.cpu_percent()}%"
 
-# Function to get battery percentage (if available)
 def get_battery_percentage():
     try:
         battery = psutil.sensors_battery()
@@ -55,7 +52,6 @@ def get_battery_percentage():
     except AttributeError:
         return "Battery: N/A"
 
-# Function to get Wi-Fi signal strength
 def get_wifi_signal():
     try:
         result = subprocess.run(["iwconfig", "wlan0"], capture_output=True, text=True)
@@ -67,7 +63,6 @@ def get_wifi_signal():
     except:
         return "Wi-Fi: N/A"
 
-# Function to get current date and time
 def get_datetime():
     now = datetime.datetime.now()
     return now.strftime("%Y-%m-%d %H:%M:%S")
@@ -81,33 +76,11 @@ def draw_tabs():
     tab_width = WIDTH // len(tabs)
     for i, tab in enumerate(tabs):
         tab_rect = pygame.Rect(i * tab_width, 0, tab_width, 40)
-        if i == current_screen:
-            pygame.draw.rect(screen, ACTIVE_TAB_COLOR, tab_rect)
-            text_color = ACTIVE_TEXT_COLOR
-        else:
-            pygame.draw.rect(screen, INACTIVE_TAB_COLOR, tab_rect)
-            text_color = GREEN
+        pygame.draw.rect(screen, ACTIVE_TAB_COLOR if i == current_screen else INACTIVE_TAB_COLOR, tab_rect)
+        text_color = ACTIVE_TEXT_COLOR if i == current_screen else GREEN
         text_surface = small_font.render(tab, True, text_color)
         text_rect = text_surface.get_rect(center=(i * tab_width + tab_width // 2, 20))
         screen.blit(text_surface, text_rect)
-
-def fade_in():
-    for alpha in range(0, 255, 5):
-        overlay = pygame.Surface((WIDTH, HEIGHT))
-        overlay.fill((0, 0, 0))
-        overlay.set_alpha(alpha)
-        screen.blit(overlay, (0, 0))
-        pygame.display.flip()
-        pygame.time.delay(1)
-
-def fade_out():
-    for alpha in range(255, 0, -5):
-        overlay = pygame.Surface((WIDTH, HEIGHT))
-        overlay.fill((0, 0, 0))
-        overlay.set_alpha(alpha)
-        screen.blit(overlay, (0, 0))
-        pygame.display.flip()
-        pygame.time.delay(1)
 
 def draw_status_screen():
     screen_content.fill(BLACK)
@@ -132,21 +105,15 @@ def draw_radio_screen():
     draw_text("Radio: Scanning...", 50, 20, font_size=24)
 
 def main():
-    global current_screen, previous_screen
+    global current_screen
     clock = pygame.time.Clock()
     screens = [STATUS_SCREEN, WIKI_SCREEN, GPS_SCREEN, RADIO_SCREEN]
     
     while True:
-        if current_screen != previous_screen:
-            fade_out()
-            screen.fill(BLACK)
-            previous_screen = current_screen
-            fade_in()
-
-        screen.fill(BLACK)  # Clear screen before drawing
+        screen.fill(BLACK)  
         draw_tabs()
 
-        screen_content.fill(BLACK)  # Make sure content screen is cleared each frame
+        screen_content.fill(BLACK)  
         if current_screen == STATUS_SCREEN:
             draw_status_screen()
         elif current_screen == WIKI_SCREEN:
@@ -164,10 +131,12 @@ def main():
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_TAB and not pygame.key.get_pressed()[pygame.K_LSHIFT] and not pygame.key.get_pressed()[pygame.K_RSHIFT]:
-                    current_screen = screens[(screens.index(current_screen) + 1) % len(screens)]
-                elif event.key == pygame.K_TAB and (pygame.key.get_pressed()[pygame.K_LSHIFT] or pygame.key.get_pressed()[pygame.K_RSHIFT]):
-                    current_screen = screens[(screens.index(current_screen) - 1) % len(screens)]
+                if event.key == pygame.K_TAB:
+                    shift_pressed = pygame.key.get_pressed()[pygame.K_LSHIFT] or pygame.key.get_pressed()[pygame.K_RSHIFT]
+                    if shift_pressed:
+                        current_screen = screens[(screens.index(current_screen) - 1) % len(screens)]
+                    else:
+                        current_screen = screens[(screens.index(current_screen) + 1) % len(screens)]
 
         clock.tick(30)
 
