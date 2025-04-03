@@ -12,6 +12,8 @@ pygame.display.set_caption("Raspberry Pi Pip-Boy")
 # Colors
 GREEN = (57, 255, 20)  # Classic Pip-Boy green
 BLACK = (0, 0, 0)
+HIGHLIGHT_COLOR = (85, 255, 60)  # Light green to highlight active tab
+TAB_COLOR = (30, 180, 10)  # Darker green for inactive tabs
 
 # Fonts
 font = pygame.font.Font(None, 36)
@@ -30,10 +32,25 @@ previous_screen = MAIN_SCREEN
 # Surface for the screen content
 screen_content = pygame.Surface((WIDTH, HEIGHT))
 
+# Define the tabs
+tabs = ["Main", "GPS", "Wiki", "Radio"]
+
 def draw_text(text, x, y, font_size=36, color=GREEN):
     font = pygame.font.Font(None, font_size)
     rendered_text = font.render(text, True, color)
     screen_content.blit(rendered_text, (x, y))
+
+def draw_tabs():
+    tab_width = WIDTH // len(tabs)  # Divide screen width into equal parts for each tab
+    for i, tab in enumerate(tabs):
+        tab_rect = pygame.Rect(i * tab_width, 0, tab_width, 40)  # Tab size and position
+        if i == current_screen:
+            pygame.draw.rect(screen, HIGHLIGHT_COLOR, tab_rect)  # Highlight active tab
+        else:
+            pygame.draw.rect(screen, TAB_COLOR, tab_rect)  # Draw inactive tab
+        
+        # Draw the tab text in the center
+        draw_text(tab, i * tab_width + (tab_width // 4), 10, font_size=24, color=BLACK if i != current_screen else GREEN)
 
 def fade_in():
     for alpha in range(0, 255, 5):  # Gradually increase alpha
@@ -55,25 +72,21 @@ def fade_out():
 
 def draw_main_screen():
     screen_content.fill(BLACK)  # Clear the screen content surface
-    draw_text("Raspberry Pi Pip-Boy", 250, 20, font_size=48)
-    draw_text("System Status: Nominal", 250, 100, font_size=24)
-    draw_text("Press [Tab] for next, [Shift+Tab] for previous", 250, HEIGHT - 60, font_size=24)
+    draw_text("Raspberry Pi Pip-Boy", 250, 100, font_size=48)
+    draw_text("System Status: Nominal", 250, 200, font_size=24)
 
 def draw_gps_screen():
     screen_content.fill(BLACK)  # Clear the screen content surface
     draw_text("GPS: Searching...", 50, 20, font_size=24)
     draw_text("Status: Not Locked", 50, 60, font_size=24)
-    draw_text("Press [Tab] for next, [Shift+Tab] for previous", 250, HEIGHT - 60, font_size=24)
 
 def draw_wiki_screen():
     screen_content.fill(BLACK)  # Clear the screen content surface
     draw_text("Offline Wiki: Ready", 50, 20, font_size=24)
-    draw_text("Press [Tab] for next, [Shift+Tab] for previous", 250, HEIGHT - 60, font_size=24)
 
 def draw_radio_screen():
     screen_content.fill(BLACK)  # Clear the screen content surface
     draw_text("Radio: Scanning...", 50, 20, font_size=24)
-    draw_text("Press [Tab] for next, [Shift+Tab] for previous", 250, HEIGHT - 60, font_size=24)
 
 def main():
     global current_screen, previous_screen
@@ -87,7 +100,10 @@ def main():
             previous_screen = current_screen  # Update previous screen for comparison
             fade_in()  # Fade in the new screen
 
-        # Draw the appropriate screen content
+        # Draw the tab bar
+        draw_tabs()
+
+        # Draw the appropriate screen content below the tab bar
         if current_screen == MAIN_SCREEN:
             draw_main_screen()
         elif current_screen == GPS_SCREEN:
@@ -97,7 +113,7 @@ def main():
         elif current_screen == RADIO_SCREEN:
             draw_radio_screen()
 
-        screen.blit(screen_content, (0, 0))  # Blit the content surface onto the screen
+        screen.blit(screen_content, (0, 40))  # Blit the content surface below the tab bar
         pygame.display.flip()  # Update the display
 
         for event in pygame.event.get():
