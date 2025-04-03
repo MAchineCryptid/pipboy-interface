@@ -1,0 +1,44 @@
+import pygame
+import sys
+
+# Initialize Pygame
+pygame.init()
+
+# Screen settings
+WIDTH, HEIGHT = 800, 480  # Adjust for your HDMI LCD screen
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Raspberry Pi Pip-Boy")
+
+# Colors
+GREEN = (57, 255, 20)  # Classic Pip-Boy green
+BLACK = (0, 0, 0)
+
+# Fonts
+font = pygame.font.Font(None, 36)
+
+def draw_text(text, x, y):
+    rendered_text = font.render(text, True, GREEN)
+    screen.blit(rendered_text, (x, y))
+
+def main():
+    clock = pygame.time.Clock()
+    
+    while True:
+        screen.fill(BLACK)
+        
+        # Placeholder UI elements
+        draw_text("GPS: Searching...", 50, 50)
+        draw_text("Offline Wiki: Ready", 50, 100)
+        draw_text("Radio: Scanning...", 50, 150)
+        
+        pygame.display.flip()
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+        
+        clock.tick(30)
+
+if __name__ == "__main__":
+    main()
