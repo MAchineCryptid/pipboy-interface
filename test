@@ -9,11 +9,12 @@ pygame.init()
 
 # Screen settings
 WIDTH, HEIGHT = 800, 480
+BOTTOM_BORDER_HEIGHT = 30
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Raspberry Pi Pip-Boy")
 
 # Create a surface for screen content
-screen_content = pygame.Surface((WIDTH, HEIGHT - 40))
+screen_content = pygame.Surface((WIDTH, HEIGHT - 40 - BOTTOM_BORDER_HEIGHT))
 
 # Colors
 GREEN = (57, 255, 20)
@@ -22,6 +23,7 @@ ACTIVE_TAB_COLOR = (30, 180, 10)
 INACTIVE_TAB_COLOR = BLACK
 TEXT_COLOR = GREEN
 ACTIVE_TEXT_COLOR = BLACK  # Text color for active tab
+BOTTOM_BORDER_COLOR = BLACK
 
 # Fonts
 font = pygame.font.Font(None, 36)
@@ -86,6 +88,11 @@ def draw_tabs():
         text_rect = text_surface.get_rect(center=(i * tab_width + tab_width // 2, 20))
         screen.blit(text_surface, text_rect)
 
+def draw_bottom_border():
+    pygame.draw.rect(screen, BOTTOM_BORDER_COLOR, (0, HEIGHT - BOTTOM_BORDER_HEIGHT, WIDTH, BOTTOM_BORDER_HEIGHT))
+    datetime_text = small_font.render(get_datetime(), True, GREEN)
+    screen.blit(datetime_text, (WIDTH - 180, HEIGHT - BOTTOM_BORDER_HEIGHT + 5))
+
 def draw_status_screen():
     screen_content.fill(BLACK)
     draw_text("SYSTEM STATUS", 280, 60, font_size=48)
@@ -93,8 +100,6 @@ def draw_status_screen():
     draw_text(get_storage_space(), 50, 190, font_size=30)  # Storage space info
     draw_text(get_battery_percentage(), 50, 230, font_size=30)
     draw_text(get_wifi_signal(), 50, 270, font_size=30)
-    draw_text("Date & Time:", 50, 310, font_size=30)
-    draw_text(get_datetime(), 50, 350, font_size=30)
 
 def draw_gps_screen():
     screen_content.fill(BLACK)
@@ -129,6 +134,7 @@ def main():
             draw_radio_screen()
 
         screen.blit(screen_content, (0, 40))
+        draw_bottom_border()  # Draw the bottom border with date & time
         pygame.display.flip()
 
         for event in pygame.event.get():
