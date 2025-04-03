@@ -12,28 +12,28 @@ pygame.display.set_caption("Raspberry Pi Pip-Boy")
 # Colors
 GREEN = (57, 255, 20)  # Classic Pip-Boy green
 BLACK = (0, 0, 0)
-HIGHLIGHT_COLOR = (85, 255, 60)  # Light green to highlight active tab
-TAB_COLOR = (30, 180, 10)  # Darker green for inactive tabs
+TAB_COLOR = (30, 180, 10)  # Inactive tab and highlight tab color (same)
+TEXT_COLOR = (0, 0, 0)  # Text color for tab labels
 
 # Fonts
 font = pygame.font.Font(None, 36)
 small_font = pygame.font.Font(None, 24)
 
 # Screen types (tabs)
-MAIN_SCREEN = 0
-GPS_SCREEN = 1
-WIKI_SCREEN = 2
+STATUS_SCREEN = 0
+WIKI_SCREEN = 1
+GPS_SCREEN = 2
 RADIO_SCREEN = 3
 
-# Start on the main screen
-current_screen = MAIN_SCREEN
-previous_screen = MAIN_SCREEN
+# Start on the STATUS screen
+current_screen = STATUS_SCREEN
+previous_screen = STATUS_SCREEN
 
 # Surface for the screen content
 screen_content = pygame.Surface((WIDTH, HEIGHT))
 
-# Define the tabs
-tabs = ["Main", "GPS", "Wiki", "Radio"]
+# Define the tabs in the new order
+tabs = ["STATUS", "Wiki", "GPS", "Radio"]
 
 def draw_text(text, x, y, font_size=36, color=GREEN):
     font = pygame.font.Font(None, font_size)
@@ -46,14 +46,11 @@ def draw_tabs():
         # Tab size and position (simple rectangle with no border or rounded corners)
         tab_rect = pygame.Rect(i * tab_width, 0, tab_width, 40)  # Tab rectangle position and size
 
-        # Draw the active tab with light green and inactive tabs with dark green
-        if i == current_screen:
-            pygame.draw.rect(screen, HIGHLIGHT_COLOR, tab_rect)  # Highlight active tab
-        else:
-            pygame.draw.rect(screen, TAB_COLOR, tab_rect)  # Inactive tab
+        # Draw the tab with the same color for active and inactive
+        pygame.draw.rect(screen, TAB_COLOR, tab_rect)  # Same color for active and inactive tabs
 
         # Draw the tab text in the center of the tab
-        draw_text(tab, i * tab_width + (tab_width // 4), 10, font_size=24, color=BLACK if i != current_screen else GREEN)
+        draw_text(tab, i * tab_width + (tab_width // 4), 10, font_size=24, color=TEXT_COLOR)
 
 def fade_in():
     for alpha in range(0, 255, 5):  # Gradually increase alpha
@@ -73,7 +70,7 @@ def fade_out():
         pygame.display.flip()
         pygame.time.delay(1)  # Faster fade-out delay
 
-def draw_main_screen():
+def draw_status_screen():
     screen_content.fill(BLACK)  # Clear the screen content surface
     draw_text("Raspberry Pi Pip-Boy", 250, 100, font_size=48)
     draw_text("System Status: Nominal", 250, 200, font_size=24)
@@ -95,7 +92,7 @@ def main():
     global current_screen, previous_screen
     clock = pygame.time.Clock()
 
-    screens = [MAIN_SCREEN, GPS_SCREEN, WIKI_SCREEN, RADIO_SCREEN]
+    screens = [STATUS_SCREEN, WIKI_SCREEN, GPS_SCREEN, RADIO_SCREEN]
     while True:
         if current_screen != previous_screen:
             fade_out()  # Fade out to avoid flashing
@@ -107,12 +104,12 @@ def main():
         draw_tabs()
 
         # Draw the appropriate screen content below the tab bar
-        if current_screen == MAIN_SCREEN:
-            draw_main_screen()
-        elif current_screen == GPS_SCREEN:
-            draw_gps_screen()
+        if current_screen == STATUS_SCREEN:
+            draw_status_screen()
         elif current_screen == WIKI_SCREEN:
             draw_wiki_screen()
+        elif current_screen == GPS_SCREEN:
+            draw_gps_screen()
         elif current_screen == RADIO_SCREEN:
             draw_radio_screen()
 
