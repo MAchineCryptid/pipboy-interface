@@ -48,15 +48,20 @@ def get_storage_space():
     disk = psutil.disk_usage("/")
     return f"Storage Available: {disk.free // (1024**3)} GB"
 
-def get_battery_percentage():
+def get_power_status():
     try:
         battery = psutil.sensors_battery()
         if battery:
-            return f"Battery: {battery.percent}%"
+            if battery.power_plugged:
+                # Approximate power draw calculation (can be improved with specific hardware)
+                power_draw = round(psutil.cpu_percent() * 0.1, 2)  # Simulated power draw in Watts
+                return f"Power Draw: {power_draw}W"
+            else:
+                return f"Battery: {battery.percent}%"
         else:
-            return "Battery: N/A"
+            return "Power: N/A"
     except AttributeError:
-        return "Battery: N/A"
+        return "Power: N/A"
 
 def get_wifi_signal():
     try:
@@ -98,7 +103,7 @@ def draw_status_screen():
     draw_text("SYSTEM STATUS", 280, 60, font_size=48)
     draw_text(get_cpu_usage(), 50, 150, font_size=30)
     draw_text(get_storage_space(), 50, 190, font_size=30)  # Storage space info
-    draw_text(get_battery_percentage(), 50, 230, font_size=30)
+    draw_text(get_power_status(), 50, 230, font_size=30)  # Battery % or Power Draw
     draw_text(get_wifi_signal(), 50, 270, font_size=30)
 
 def draw_gps_screen():
