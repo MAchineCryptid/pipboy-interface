@@ -61,28 +61,23 @@ def fade_out():
         pygame.time.delay(10)
 
 def draw_main_screen():
-    screen.fill(BLACK)  # Clear screen only once
     draw_scanlines()
-    fade_in()
     draw_glow_text("Raspberry Pi Pip-Boy", 250, 20, font_size=48)
     draw_text("System Status: Nominal", 250, 100, font_size=24)
     draw_text("Press [1] for GPS, [2] for Wiki, [3] for Radio", 250, HEIGHT - 60, font_size=24)
 
 def draw_gps_screen():
-    screen.fill(BLACK)  # Clear screen only once
     draw_scanlines()
     draw_glow_text("GPS: Searching...", 50, 20, font_size=24)
     draw_text("Status: Not Locked", 50, 60, font_size=24)
     draw_text("Press [1] for Main Screen", 250, HEIGHT - 60, font_size=24)
 
 def draw_wiki_screen():
-    screen.fill(BLACK)  # Clear screen only once
     draw_scanlines()
     draw_glow_text("Offline Wiki: Ready", 50, 20, font_size=24)
     draw_text("Press [1] for Main Screen", 250, HEIGHT - 60, font_size=24)
 
 def draw_radio_screen():
-    screen.fill(BLACK)  # Clear screen only once
     draw_scanlines()
     draw_glow_text("Radio: Scanning...", 50, 20, font_size=24)
     draw_text("Press [1] for Main Screen", 250, HEIGHT - 60, font_size=24)
@@ -92,6 +87,7 @@ def main():
     clock = pygame.time.Clock()
 
     while True:
+        screen.fill(BLACK)  # Clear the screen only once per frame
         # Draw the appropriate screen
         if current_screen == MAIN_SCREEN:
             draw_main_screen()
