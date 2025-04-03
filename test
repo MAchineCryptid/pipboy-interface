@@ -3,6 +3,7 @@ import sys
 import psutil
 import datetime
 import subprocess
+import os
 
 # Initialize Pygame
 pygame.init()
@@ -49,19 +50,27 @@ def get_storage_space():
     return f"Storage Available: {disk.free // (1024**3)} GB"
 
 def get_power_status():
-    try:
-        battery = psutil.sensors_battery()
-        if battery:
-            if battery.power_plugged:
-                # Approximate power draw calculation (can be improved with specific hardware)
-                power_draw = round(psutil.cpu_percent() * 0.1, 2)  # Simulated power draw in Watts
-                return f"Power Draw: {power_draw}W"
-            else:
-                return f"Battery: {battery.percent}%"
-        else:
-            return "Power: N/A"
-    except AttributeError:
-        return "Power: N/A"
+    """ Check if the device is on battery or plugged in. """
+    power_path = "/sys/class/power_supply/AC/online"
+
+    if os.path.exists(power_path):
+        try:
+            with open(power_path, "r") as f:
+                power_state = f.read().strip()
+                if power_state == "1":  # Plugged in
+                    power_draw = round(psutil.cpu_percent() * 0.1, 2)  # Simulated power draw
+                    return f"Power Draw: {power_draw}W"
+                else:  # On battery
+                    battery_path = "/sys/class/power_supply/BAT0/capacity"
+                    if os.path.exists(battery_path):
+                        with open(battery_path, "r") as b:
+                            battery_level = b.read().strip()
+                            return f"Battery: {battery_level}%"
+                    else:
+                        return "Battery: N/A"
+        except:
+            return "Power: Unknown"
+    return "Power: N/A"
 
 def get_wifi_signal():
     try:
