@@ -12,8 +12,10 @@ pygame.display.set_caption("Raspberry Pi Pip-Boy")
 # Colors
 GREEN = (57, 255, 20)  # Classic Pip-Boy green
 BLACK = (0, 0, 0)
-TAB_COLOR = (30, 180, 10)  # Inactive tab and highlight tab color (same)
+ACTIVE_TAB_COLOR = (30, 180, 10)  # Highlighted tab (active)
+INACTIVE_TAB_COLOR = BLACK  # Inactive tabs are black
 TEXT_COLOR = (0, 0, 0)  # Text color for tab labels
+ACTIVE_TEXT_COLOR = GREEN  # Green text for active tab
 
 # Fonts
 font = pygame.font.Font(None, 36)
@@ -33,7 +35,7 @@ previous_screen = STATUS_SCREEN
 screen_content = pygame.Surface((WIDTH, HEIGHT))
 
 # Define the tabs in the new order
-tabs = ["STATUS", "Wiki", "GPS", "Radio"]
+tabs = ["STATUS", "WIKI", "GPS", "RADIO"]
 
 def draw_text(text, x, y, font_size=36, color=GREEN):
     font = pygame.font.Font(None, font_size)
@@ -43,14 +45,21 @@ def draw_text(text, x, y, font_size=36, color=GREEN):
 def draw_tabs():
     tab_width = WIDTH // len(tabs)  # Divide screen width into equal parts for each tab
     for i, tab in enumerate(tabs):
-        # Tab size and position (simple rectangle with no border or rounded corners)
-        tab_rect = pygame.Rect(i * tab_width, 0, tab_width, 40)  # Tab rectangle position and size
+        # Tab size and position
+        tab_rect = pygame.Rect(i * tab_width, 0, tab_width, 40)
 
-        # Draw the tab with the same color for active and inactive
-        pygame.draw.rect(screen, TAB_COLOR, tab_rect)  # Same color for active and inactive tabs
+        # Set the tab color (active tab is green, inactive tabs are black)
+        if i == current_screen:
+            pygame.draw.rect(screen, ACTIVE_TAB_COLOR, tab_rect)  # Highlight active tab
+            text_color = ACTIVE_TEXT_COLOR  # Green text for active tab
+        else:
+            pygame.draw.rect(screen, INACTIVE_TAB_COLOR, tab_rect)  # Black background for inactive tabs
+            text_color = GREEN  # Green text for inactive tabs
 
-        # Draw the tab text in the center of the tab
-        draw_text(tab, i * tab_width + (tab_width // 4), 10, font_size=24, color=TEXT_COLOR)
+        # Draw the tab label inside the tab
+        text_surface = small_font.render(tab, True, text_color)
+        text_rect = text_surface.get_rect(center=(i * tab_width + tab_width // 2, 20))  # Center text in tab
+        screen.blit(text_surface, text_rect)
 
 def fade_in():
     for alpha in range(0, 255, 5):  # Gradually increase alpha
