@@ -36,22 +36,22 @@ def draw_text(text, x, y, font_size=36, color=GREEN):
     rendered_text = font.render(text, True, color)
     screen_content.blit(rendered_text, (x, y))
 
-def draw_glow_text(text, x, y, font_size=36, glow_color=DARK_GREEN):
-    # Create a semi-transparent surface for the glow
+def draw_glow_text(text, x, y, font_size=36, glow_color=DARK_GREEN, alpha=100):
+    # Create a surface for the glow with transparency
     glow_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)  # Use SRCALPHA for transparency
-    glow_surface.fill((0, 0, 0, 0))  # Start with fully transparent surface
+    glow_surface.fill((0, 0, 0, 0))  # Start with a fully transparent surface
     
-    # Draw the glow multiple times with offsets to simulate glow
+    # Draw the glow effect (text multiple times with small offsets)
     for offset in range(3, 0, -1):  # Different offsets for the glow
         glow_surface.blit(screen_content, (x + offset, y + offset))
         
-    # Apply the glow with transparency (e.g., 50% opacity)
-    glow_surface.fill((glow_color[0], glow_color[1], glow_color[2], 100))  # 100 is the alpha value (0-255)
+    # Apply the transparency (alpha value) to the glow
+    glow_surface.fill((glow_color[0], glow_color[1], glow_color[2], alpha))  # Set alpha here
     
-    # Blit the glow effect
+    # Draw the glow effect to the main screen content surface
     screen_content.blit(glow_surface, (x, y))
-
-    # Finally, render the main text (without transparency)
+    
+    # Draw the main text (no transparency)
     draw_text(text, x, y, font_size, color=GREEN)
 
 def fade_in():
