@@ -1,130 +1,191 @@
 import pygame
+import sys
 import psutil
+import datetime
+import subprocess
 import os
-import time
 
 # Initialize Pygame
 pygame.init()
 
-# Define colors for the yellow monochrome theme
-YELLOW = (255, 255, 0)  # Pip-Boy Amber
-DARK_YELLOW = (174, 149, 64)  # Muted amber for inactive tabs
+# Screen settings
+WIDTH, HEIGHT = 800, 480
+BOTTOM_BORDER_HEIGHT = 30
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Raspberry Pi Pip-Boy")
+
+# Create a surface for screen content
+screen_content = pygame.Surface((WIDTH, HEIGHT - 40 - BOTTOM_BORDER_HEIGHT))
+
+# Colors for Yellow Monochrome Theme
+YELLOW = (255, 176, 0)  # Pip-Boy Amber
+DARK_YELLOW = (139, 110, 20)  # Muted amber for inactive tabs
 BLACK = (0, 0, 0)
 
-# Set up the screen dimensions
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 480
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Pip-Boy Interface")
+# Apply new colors
+TEXT_COLOR = YELLOW
+ACTIVE_TAB_COLOR = YELLOW
+INACTIVE_TAB_COLOR = BLACK  # Background color stays black
+ACTIVE_TEXT_COLOR = BLACK  # Black text for contrast
+BOTTOM_BORDER_COLOR = BLACK
 
-# Load the ShareTech font
-font_path = "ShareTech-Regular.ttf"  # Replace with the correct path if necessary
-font = pygame.font.Font(font_path, 36)  # Main font (larger text)
-small_font = pygame.font.Font(font_path, 24)  # Smaller font
+# Fonts
+font = pygame.font.Font(None, 36)
+small_font = pygame.font.Font(None, 24)
 
-# Function to render text on the screen
-def draw_text(text, x, y, font_size=36, color=YELLOW):
-    font = pygame.font.Font(font_path, font_size)
-    text_surface = font.render(text, True, color)
-    screen.blit(text_surface, (x, y))
+# Screen types (tabs)
+STATUS_SCREEN = 0
+WIKI_SCREEN = 1
+GPS_SCREEN = 2
+RADIO_SCREEN = 3
 
-# Function to apply a yellow color filter to the background image
+# Start on the STATUS screen
+current_screen = STATUS_SCREEN
+
+# Define the tabs
+tabs = ["STATUS", "WIKI", "GPS", "RADIO"]
+
+# Load the background image for STATUS screen
+bg_image = pygame.image.load("status_bg.png")  # Update with your image path
+
+# Function to apply yellow filter to the image
 def apply_yellow_filter(image):
+    """ Apply a yellow filter to the background image. """
     yellow_image = image.copy()
     width, height = yellow_image.get_size()
     for x in range(width):
         for y in range(height):
             r, g, b, a = yellow_image.get_at((x, y))
-            yellow_image.set_at((x, y), (min(r + 50, 174), min(g + 50, 149), min(b + 20, 64), a))  # Apply filter
+            # Apply yellow tint by boosting red and green, maintaining blue as low
+            yellow_image.set_at((x, y), (min(r + 70, 174), min(g + 70, 149), min(b + 40, 64), a))
     return yellow_image
+# Apply the filter to the background image
+bg_image = apply_yellow_filter(bg_image)
 
-# Function to draw the STATUS screen
-def draw_status_screen():
-    screen.fill(BLACK)  # Fill the screen with black background
+def get_cpu_usage():
+    return f"CPU: {psutil.cpu_percent()}%"
 
-    # Background image
-    background_image = pygame.image.load("background.png")
-    background_image = apply_yellow_filter(background_image)
-    screen.blit(background_image, (0, 0))
+def get_storage_space():
+    disk = psutil.disk_usage("/")
+    return f"Storage Available: {disk.free // (1024**3)} GB"
 
-    # Draw the "G.E.C.K." text on the Status screen
-    draw_text("G.E.C.K.", 280, 60, font_size=48, color=YELLOW)
+def get_power_status():
+    """ Check if the device is on battery or plugged in. """
+    power_path = "/sys/class/power_supply/AC/online"
 
-    # Draw CPU Usage
-    cpu_usage = psutil.cpu_percent(interval=1)
-    draw_text(f"CPU Usage: {cpu_usage}%", 50, 120, font_size=36, color=YELLOW)
+    if os.path.exists(power_path):
+        try:
+            with open(power_path, "r") as f:
+                power_state = f.read().strip()
+                if power_state == "1":  # Plugged in
+                    power_draw = round(psutil.cpu_percent() * 0.1, 2)  # Simulated power draw
+                    return f"Power Draw: {power_draw}W"
+                else:  # On battery
+                    battery_path = "/sys/class/power_supply/BAT0/capacity"
+                    if os.path.exists(battery_path):
+                        with open(battery_path, "r") as b:
+                            battery_level = b.read().strip()
+                            return f"Battery: {battery_level}%"
+                    else:
+                        return "Battery: N/A"
+        except:
+            return "Power: Unknown"
+    return "Power: N/A"
 
-    # Handle Battery Status or Power Draw
-    battery = psutil.sensors_battery()
-    if battery is not None:
-        battery_percent = battery.percent
-        draw_text(f"Battery: {battery_percent}%", 50, 180, font_size=36, color=YELLOW)
-    else:
-        # If no battery, display power plugged status
-        power_plugged = psutil.sensors_battery() and psutil.sensors_battery().power_plugged
-        if power_plugged:
-            draw_text(f"Power Draw: Active", 50, 180, font_size=36, color=YELLOW)
+def get_wifi_signal():
+    try:
+        result = subprocess.run(["iwconfig", "wlan0"], capture_output=True, text=True)
+        if "Signal level=" in result.stdout:
+            signal_level = result.stdout.split("Signal level=")[1].split(" ")[0]
+            return f"Wi-Fi: {signal_level} dBm"
         else:
-            draw_text(f"Power Draw: Inactive", 50, 180, font_size=36, color=YELLOW)
+            return "Wi-Fi: No Signal"
+    except:
+        return "Wi-Fi: N/A"
 
-    # Draw Storage Space Available
-    total, used, free = psutil.disk_usage('/')
-    storage_available = free // (2**30)  # Convert to GB
-    draw_text(f"Storage Available: {storage_available} GB", 50, 240, font_size=36, color=YELLOW)
+def get_datetime():
+    now = datetime.datetime.now()
+    return now.strftime("%m-%d-%Y %H:%M:%S")  # MM-DD-YYYY HH:MM:SS format
 
-    # Draw the small text at the bottom for Date and Time
-    current_time = time.strftime("%m-%d-%Y %H:%M:%S")
-    draw_text(current_time, 50, SCREEN_HEIGHT - 30, font_size=18, color=DARK_YELLOW)
+def draw_text(text, x, y, font_size=36, color=YELLOW):
+    font = pygame.font.Font(None, font_size)
+    rendered_text = font.render(text, True, color)
+    screen_content.blit(rendered_text, (x, y))
 
-    pygame.display.update()
+def draw_tabs():
+    tab_width = WIDTH // len(tabs)
+    for i, tab in enumerate(tabs):
+        tab_rect = pygame.Rect(i * tab_width, 0, tab_width, 40)
+        pygame.draw.rect(screen, ACTIVE_TAB_COLOR if i == current_screen else INACTIVE_TAB_COLOR, tab_rect)
+        text_color = ACTIVE_TEXT_COLOR if i == current_screen else YELLOW
+        text_surface = small_font.render(tab, True, text_color)
+        text_rect = text_surface.get_rect(center=(i * tab_width + tab_width // 2, 20))
+        screen.blit(text_surface, text_rect)
 
-# Function to handle the drawing of other screens (WIKI, GPS, RADIO)
-def draw_other_screens(screen_name):
-    screen.fill(BLACK)  # Fill with black for other screens
-    draw_text(screen_name, 50, 50, font_size=48, color=YELLOW)
-    pygame.display.update()
+def draw_bottom_border():
+    pygame.draw.rect(screen, BOTTOM_BORDER_COLOR, (0, HEIGHT - BOTTOM_BORDER_HEIGHT, WIDTH, BOTTOM_BORDER_HEIGHT))
+    datetime_text = small_font.render(get_datetime(), True, YELLOW)
+    screen.blit(datetime_text, (WIDTH - 180, HEIGHT - BOTTOM_BORDER_HEIGHT + 5))
 
-# Main function to handle screen transitions
+def draw_status_screen():
+    screen_content.fill(BLACK)
+    # Draw the background image first (behind the text)
+    screen_content.blit(bg_image, (0, 0))  # Position the background image in the top-left
+    draw_text("SYSTEM STATUS", 280, 60, font_size=48)
+    draw_text(get_cpu_usage(), 50, 150, font_size=30)
+    draw_text(get_storage_space(), 50, 190, font_size=30)  # Storage space info
+    draw_text(get_power_status(), 50, 230, font_size=30)  # Battery % or Power Draw
+    draw_text(get_wifi_signal(), 50, 270, font_size=30)
+
+def draw_gps_screen():
+    screen_content.fill(BLACK)
+    draw_text("GPS: Searching...", 50, 20, font_size=24)
+    draw_text("Status: Not Locked", 50, 60, font_size=24)
+
+def draw_wiki_screen():
+    screen_content.fill(BLACK)
+    draw_text("Offline Wiki: Ready", 50, 20, font_size=24)
+
+def draw_radio_screen():
+    screen_content.fill(BLACK)
+    draw_text("Radio: Scanning...", 50, 20, font_size=24)
+
 def main():
+    global current_screen
     clock = pygame.time.Clock()
-    running = True
-    current_screen = "STATUS"
+    screens = [STATUS_SCREEN, WIKI_SCREEN, GPS_SCREEN, RADIO_SCREEN]
+    
+    while True:
+        screen.fill(BLACK)  
+        draw_tabs()
 
-    while running:
+        screen_content.fill(BLACK)  
+        if current_screen == STATUS_SCREEN:
+            draw_status_screen()
+        elif current_screen == WIKI_SCREEN:
+            draw_wiki_screen()
+        elif current_screen == GPS_SCREEN:
+            draw_gps_screen()
+        elif current_screen == RADIO_SCREEN:
+            draw_radio_screen()
+
+        screen.blit(screen_content, (0, 40))
+        draw_bottom_border()  # Draw the bottom border with date & time
+        pygame.display.flip()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
-
-            # Handling tab navigation with TAB and SHIFT+TAB
-            if event.type == pygame.KEYDOWN:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_TAB:
-                    if current_screen == "STATUS":
-                        current_screen = "WIKI"
-                    elif current_screen == "WIKI":
-                        current_screen = "GPS"
-                    elif current_screen == "GPS":
-                        current_screen = "RADIO"
+                    shift_pressed = pygame.key.get_pressed()[pygame.K_LSHIFT] or pygame.key.get_pressed()[pygame.K_RSHIFT]
+                    if shift_pressed:
+                        current_screen = screens[(screens.index(current_screen) - 1) % len(screens)]
                     else:
-                        current_screen = "STATUS"
-                elif event.key == pygame.K_SHIFT:
-                    if current_screen == "STATUS":
-                        current_screen = "RADIO"
-                    elif current_screen == "WIKI":
-                        current_screen = "STATUS"
-                    elif current_screen == "GPS":
-                        current_screen = "WIKI"
-                    else:
-                        current_screen = "GPS"
+                        current_screen = screens[(screens.index(current_screen) + 1) % len(screens)]
 
-        # Draw the current screen
-        if current_screen == "STATUS":
-            draw_status_screen()
-        else:
-            draw_other_screens(current_screen)
-
-        clock.tick(60)  # Limit to 60 frames per second
-
-    pygame.quit()
+        clock.tick(30)
 
 if __name__ == "__main__":
     main()
