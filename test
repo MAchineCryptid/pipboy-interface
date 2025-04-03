@@ -14,6 +14,7 @@ GREEN = (57, 255, 20)  # Classic Pip-Boy green
 BLACK = (0, 0, 0)
 HIGHLIGHT_COLOR = (85, 255, 60)  # Light green to highlight active tab
 TAB_COLOR = (30, 180, 10)  # Darker green for inactive tabs
+TAB_BORDER_COLOR = (80, 80, 80)  # Dark metallic color for tab borders
 
 # Fonts
 font = pygame.font.Font(None, 36)
@@ -43,13 +44,18 @@ def draw_text(text, x, y, font_size=36, color=GREEN):
 def draw_tabs():
     tab_width = WIDTH // len(tabs)  # Divide screen width into equal parts for each tab
     for i, tab in enumerate(tabs):
-        tab_rect = pygame.Rect(i * tab_width, 0, tab_width, 40)  # Tab size and position
+        # Tab size and position with rounded corners for 3D look
+        tab_rect = pygame.Rect(i * tab_width, 0, tab_width, 40)  # Tab rectangle position and size
+        tab_border_rect = pygame.Rect(i * tab_width + 2, 2, tab_width - 4, 36)  # Smaller rectangle for border effect
+
+        # Draw the tab border (3D effect)
+        pygame.draw.rect(screen, TAB_BORDER_COLOR, tab_border_rect, border_radius=10)  # Draw tab border
         if i == current_screen:
-            pygame.draw.rect(screen, HIGHLIGHT_COLOR, tab_rect)  # Highlight active tab
+            pygame.draw.rect(screen, HIGHLIGHT_COLOR, tab_rect)  # Highlight active tab with light green
         else:
-            pygame.draw.rect(screen, TAB_COLOR, tab_rect)  # Draw inactive tab
+            pygame.draw.rect(screen, TAB_COLOR, tab_rect)  # Draw inactive tab in dark green
         
-        # Draw the tab text in the center
+        # Draw the tab text in the center of the tab
         draw_text(tab, i * tab_width + (tab_width // 4), 10, font_size=24, color=BLACK if i != current_screen else GREEN)
 
 def fade_in():
