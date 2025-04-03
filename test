@@ -40,17 +40,27 @@ def draw_text(text, x, y, font_size=36, color=GREEN):
     rendered_text = font.render(text, True, color)
     screen_content.blit(rendered_text, (x, y))
 
+def draw_rounded_rect(surface, color, rect, radius):
+    # Draw a rectangle with rounded corners
+    x, y, width, height = rect
+    pygame.draw.rect(surface, color, (x + radius, y, width - 2 * radius, height))
+    pygame.draw.rect(surface, color, (x, y + radius, width, height - 2 * radius))
+    pygame.draw.circle(surface, color, (x + radius, y + radius), radius)
+    pygame.draw.circle(surface, color, (x + width - radius, y + radius), radius)
+    pygame.draw.circle(surface, color, (x + radius, y + height - radius), radius)
+    pygame.draw.circle(surface, color, (x + width - radius, y + height - radius), radius)
+
 def draw_tabs():
     tab_width = WIDTH // len(tabs)  # Divide screen width into equal parts for each tab
     for i, tab in enumerate(tabs):
-        # Tab size and position with rounded corners for a clean look
+        # Tab size and position
         tab_rect = pygame.Rect(i * tab_width, 0, tab_width, 40)  # Tab rectangle position and size
 
         # Draw the active tab with light green and inactive tabs with dark green
         if i == current_screen:
-            pygame.draw.rect(screen, HIGHLIGHT_COLOR, tab_rect, border_radius=10)  # Highlight active tab
+            draw_rounded_rect(screen, HIGHLIGHT_COLOR, tab_rect, 10)  # Highlight active tab
         else:
-            pygame.draw.rect(screen, TAB_COLOR, tab_rect, border_radius=10)  # Inactive tab with rounded corners
+            draw_rounded_rect(screen, TAB_COLOR, tab_rect, 10)  # Inactive tab with rounded corners
         
         # Draw the tab text in the center of the tab
         draw_text(tab, i * tab_width + (tab_width // 4), 10, font_size=24, color=BLACK if i != current_screen else GREEN)
