@@ -26,9 +26,6 @@ RADIO_SCREEN = 3
 # Start on the main screen
 current_screen = MAIN_SCREEN
 
-# Initialize frame counter for blinking text
-frame_counter = 0
-
 def draw_text(text, x, y, font_size=36, color=GREEN):
     font = pygame.font.Font(None, font_size)
     rendered_text = font.render(text, True, color)
@@ -73,21 +70,12 @@ def is_mouse_hover(x, y, width, height):
     mouse_x, mouse_y = pygame.mouse.get_pos()
     return x < mouse_x < x + width and y < mouse_y < y + height
 
-def draw_blinking_text(text, x, y, font_size=36, color=GREEN, blink_speed=500):
-    global frame_counter
-    frame_counter += 1
-    
-    # Blink logic: Show text every "blink_speed" frames
-    if frame_counter % blink_speed < blink_speed // 2:
-        draw_text(text, x, y, font_size, color)
-
 def draw_main_screen():
     draw_scanlines()
     fade_in()
     draw_glow_text("Raspberry Pi Pip-Boy", 250, 20, font_size=48)
     
-    # Blinking text for system status
-    draw_blinking_text("System Status: Nominal", 250, 100, font_size=24)
+    draw_text("System Status: Nominal", 250, 100, font_size=24)
     
     draw_text("Press [1] for GPS, [2] for Wiki, [3] for Radio", 250, HEIGHT - 60, font_size=24)
 
