@@ -17,13 +17,16 @@ pygame.display.set_caption("Raspberry Pi Pip-Boy")
 # Create a surface for screen content
 screen_content = pygame.Surface((WIDTH, HEIGHT - 40 - BOTTOM_BORDER_HEIGHT))
 
-# Colors
-GREEN = (57, 255, 20)
+# Colors for Yellow Monochrome Theme
+YELLOW = (255, 176, 0)  # Pip-Boy Amber
+DARK_YELLOW = (139, 110, 20)  # Muted amber for inactive tabs
 BLACK = (0, 0, 0)
-ACTIVE_TAB_COLOR = (30, 180, 10)
-INACTIVE_TAB_COLOR = BLACK
-TEXT_COLOR = GREEN
-ACTIVE_TEXT_COLOR = BLACK  # Text color for active tab
+
+# Apply new colors
+TEXT_COLOR = YELLOW
+ACTIVE_TAB_COLOR = YELLOW
+INACTIVE_TAB_COLOR = BLACK  # Background color stays black
+ACTIVE_TEXT_COLOR = BLACK  # Black text for contrast
 BOTTOM_BORDER_COLOR = BLACK
 
 # Fonts
@@ -41,6 +44,24 @@ current_screen = STATUS_SCREEN
 
 # Define the tabs
 tabs = ["STATUS", "WIKI", "GPS", "RADIO"]
+
+# Load the background image for STATUS screen
+bg_image = pygame.image.load("status_bg.png")  # Update with your image path
+
+# Function to apply yellow filter to the image
+def apply_yellow_filter(image):
+    """ Apply a yellow filter to the background image. """
+    yellow_image = image.copy()
+    width, height = yellow_image.get_size()
+    for x in range(width):
+        for y in range(height):
+            r, g, b, a = yellow_image.get_at((x, y))
+            # Apply yellow tint by boosting red and green, maintaining blue as low
+            yellow_image.set_at((x, y), (min(r + 50, 255), min(g + 100, 255), b, a))
+    return yellow_image
+
+# Apply the filter to the background image
+bg_image = apply_yellow_filter(bg_image)
 
 def get_cpu_usage():
     return f"CPU: {psutil.cpu_percent()}%"
@@ -87,7 +108,7 @@ def get_datetime():
     now = datetime.datetime.now()
     return now.strftime("%m-%d-%Y %H:%M:%S")  # MM-DD-YYYY HH:MM:SS format
 
-def draw_text(text, x, y, font_size=36, color=GREEN):
+def draw_text(text, x, y, font_size=36, color=YELLOW):
     font = pygame.font.Font(None, font_size)
     rendered_text = font.render(text, True, color)
     screen_content.blit(rendered_text, (x, y))
@@ -97,18 +118,20 @@ def draw_tabs():
     for i, tab in enumerate(tabs):
         tab_rect = pygame.Rect(i * tab_width, 0, tab_width, 40)
         pygame.draw.rect(screen, ACTIVE_TAB_COLOR if i == current_screen else INACTIVE_TAB_COLOR, tab_rect)
-        text_color = ACTIVE_TEXT_COLOR if i == current_screen else GREEN
+        text_color = ACTIVE_TEXT_COLOR if i == current_screen else YELLOW
         text_surface = small_font.render(tab, True, text_color)
         text_rect = text_surface.get_rect(center=(i * tab_width + tab_width // 2, 20))
         screen.blit(text_surface, text_rect)
 
 def draw_bottom_border():
     pygame.draw.rect(screen, BOTTOM_BORDER_COLOR, (0, HEIGHT - BOTTOM_BORDER_HEIGHT, WIDTH, BOTTOM_BORDER_HEIGHT))
-    datetime_text = small_font.render(get_datetime(), True, GREEN)
+    datetime_text = small_font.render(get_datetime(), True, YELLOW)
     screen.blit(datetime_text, (WIDTH - 180, HEIGHT - BOTTOM_BORDER_HEIGHT + 5))
 
 def draw_status_screen():
     screen_content.fill(BLACK)
+    # Draw the background image first (behind the text)
+    screen_content.blit(bg_image, (0, 0))  # Position the background image in the top-left
     draw_text("SYSTEM STATUS", 280, 60, font_size=48)
     draw_text(get_cpu_usage(), 50, 150, font_size=30)
     draw_text(get_storage_space(), 50, 190, font_size=30)  # Storage space info
