@@ -43,7 +43,7 @@ def draw_glow_text(text, x, y, font_size=36, glow_color=GREEN):
 
 def draw_scanlines():
     line_height = 2  # Space between each scanline
-    for y in range(0, HEIGHT, line_height * 2):  # Skip every other line
+    for y in range(0, HEIGHT, line_height * 2):  # Skip every other line to create scanlines
         pygame.draw.line(screen_content, (0, 0, 0), (0, y), (WIDTH, y), line_height)
 
 def fade_in():
@@ -66,27 +66,27 @@ def fade_out():
 
 def draw_main_screen():
     screen_content.fill(BLACK)  # Clear the screen content surface
-    draw_scanlines()
+    draw_scanlines()  # Draw the scanlines on the screen
     draw_glow_text("Raspberry Pi Pip-Boy", 250, 20, font_size=48)
     draw_text("System Status: Nominal", 250, 100, font_size=24)
     draw_text("Press [1] for GPS, [2] for Wiki, [3] for Radio", 250, HEIGHT - 60, font_size=24)
 
 def draw_gps_screen():
     screen_content.fill(BLACK)  # Clear the screen content surface
-    draw_scanlines()
+    draw_scanlines()  # Draw the scanlines on the screen
     draw_glow_text("GPS: Searching...", 50, 20, font_size=24)
     draw_text("Status: Not Locked", 50, 60, font_size=24)
     draw_text("Press [1] for Main Screen", 250, HEIGHT - 60, font_size=24)
 
 def draw_wiki_screen():
     screen_content.fill(BLACK)  # Clear the screen content surface
-    draw_scanlines()
+    draw_scanlines()  # Draw the scanlines on the screen
     draw_glow_text("Offline Wiki: Ready", 50, 20, font_size=24)
     draw_text("Press [1] for Main Screen", 250, HEIGHT - 60, font_size=24)
 
 def draw_radio_screen():
     screen_content.fill(BLACK)  # Clear the screen content surface
-    draw_scanlines()
+    draw_scanlines()  # Draw the scanlines on the screen
     draw_glow_text("Radio: Scanning...", 50, 20, font_size=24)
     draw_text("Press [1] for Main Screen", 250, HEIGHT - 60, font_size=24)
 
