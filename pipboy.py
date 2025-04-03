@@ -1,147 +1,129 @@
 import pygame
-import sys
+import psutil
+import os
+import time
 
 # Initialize Pygame
 pygame.init()
 
-# Screen settings
-WIDTH, HEIGHT = 800, 480  # Adjust for your HDMI LCD screen
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Raspberry Pi Pip-Boy")
-
-# Colors
-GREEN = (57, 255, 20)  # Classic Pip-Boy green
+# Define colors for the yellow monochrome theme
+YELLOW = (255, 255, 0)  # Pip-Boy Amber
+DARK_YELLOW = (174, 149, 64)  # Muted amber for inactive tabs
 BLACK = (0, 0, 0)
 
-# Fonts
-font = pygame.font.Font(None, 36)
-small_font = pygame.font.Font(None, 24)
+# Set up the screen dimensions
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 480
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Pip-Boy Interface")
 
-# Screen types (tabs)
-MAIN_SCREEN = 0
-GPS_SCREEN = 1
-WIKI_SCREEN = 2
-RADIO_SCREEN = 3
+# Set up basic font (default Pygame font)
+font = pygame.font.SysFont("monospace", 36)  # Default Pygame monospace font
+small_font = pygame.font.SysFont("monospace", 24)  # Smaller monospace font
 
-# Start on the main screen
-current_screen = MAIN_SCREEN
+# Function to render text on the screen
+def draw_text(text, x, y, font_size=36, color=YELLOW):
+    font = pygame.font.SysFont("monospace", font_size)
+    text_surface = font.render(text, True, color)
+    screen.blit(text_surface, (x, y))
 
-def draw_text(text, x, y, font_size=36, color=GREEN):
-    font = pygame.font.Font(None, font_size)
-    rendered_text = font.render(text, True, color)
-    screen.blit(rendered_text, (x, y))
+# Function to apply a yellow color filter to the background image
+def apply_yellow_filter(image):
+    yellow_image = image.copy()
+    width, height = yellow_image.get_size()
+    for x in range(width):
+        for y in range(height):
+            r, g, b, a = yellow_image.get_at((x, y))
+            yellow_image.set_at((x, y), (min(r + 50, 174), min(g + 50, 149), min(b + 20, 64), a))  # Apply filter
+    return yellow_image
 
-def draw_glow_text(text, x, y, font_size=36, glow_color=GREEN):
-    # Draw glow effect by rendering text multiple times in different positions
-    for offset in range(3, 0, -1):  # Different offsets for the glow
-        draw_text(text, x + offset, y + offset, font_size, color=glow_color)
-    draw_text(text, x, y, font_size, color=GREEN)
+# Function to draw the STATUS screen
+def draw_status_screen():
+    screen.fill(BLACK)  # Fill the screen with black background
 
-def draw_scanlines():
-    line_height = 2  # Space between each scanline
-    for y in range(0, HEIGHT, line_height * 2):  # Skip every other line
-        pygame.draw.line(screen, (0, 0, 0), (0, y), (WIDTH, y), line_height)
+    # Background image
+    background_image = pygame.image.load("background.png")
+    background_image = apply_yellow_filter(background_image)
+    screen.blit(background_image, (0, 0))
 
-def fade_in():
-    for alpha in range(0, 255, 5):  # Gradually increase alpha
-        overlay = pygame.Surface((WIDTH, HEIGHT))
-        overlay.fill((0, 0, 0))
-        overlay.set_alpha(alpha)
-        screen.blit(overlay, (0, 0))
-        pygame.display.flip()
-        pygame.time.delay(10)
+    # Draw the "G.E.C.K." text on the Status screen
+    draw_text("G.E.C.K.", 280, 60, font_size=48, color=YELLOW)
 
-def fade_out():
-    for alpha in range(255, 0, -5):  # Gradually decrease alpha
-        overlay = pygame.Surface((WIDTH, HEIGHT))
-        overlay.fill((0, 0, 0))
-        overlay.set_alpha(alpha)
-        screen.blit(overlay, (0, 0))
-        pygame.display.flip()
-        pygame.time.delay(10)
+    # Draw CPU Usage
+    cpu_usage = psutil.cpu_percent(interval=1)
+    draw_text(f"CPU Usage: {cpu_usage}%", 50, 120, font_size=36, color=YELLOW)
 
-def draw_button(x, y, width, height, text, hover=False):
-    if hover:
-        pygame.draw.rect(screen, GREEN, pygame.Rect(x - 5, y - 5, width + 10, height + 10), 3)  # Glow on hover
-    pygame.draw.rect(screen, GREEN, pygame.Rect(x, y, width, height))
-    draw_text(text, x + 10, y + 10, font_size=24)
+    # Handle Battery Status or Power Draw
+    battery = psutil.sensors_battery()
+    if battery is not None:
+        battery_percent = battery.percent
+        draw_text(f"Battery: {battery_percent}%", 50, 180, font_size=36, color=YELLOW)
+    else:
+        # If no battery, display power plugged status
+        power_plugged = psutil.sensors_battery() and psutil.sensors_battery().power_plugged
+        if power_plugged:
+            draw_text(f"Power Draw: Active", 50, 180, font_size=36, color=YELLOW)
+        else:
+            draw_text(f"Power Draw: Inactive", 50, 180, font_size=36, color=YELLOW)
 
-def is_mouse_hover(x, y, width, height):
-    mouse_x, mouse_y = pygame.mouse.get_pos()
-    return x < mouse_x < x + width and y < mouse_y < y + height
+    # Draw Storage Space Available
+    total, used, free = psutil.disk_usage('/')
+    storage_available = free // (2**30)  # Convert to GB
+    draw_text(f"Storage Available: {storage_available} GB", 50, 240, font_size=36, color=YELLOW)
 
-def draw_main_screen():
-    draw_scanlines()
-    fade_in()
-    draw_glow_text("Raspberry Pi Pip-Boy", 250, 20, font_size=48)
-    
-    draw_text("System Status: Nominal", 250, 100, font_size=24)
-    
-    draw_text("Press [1] for GPS, [2] for Wiki, [3] for Radio", 250, HEIGHT - 60, font_size=24)
+    # Draw the small text at the bottom for Date and Time
+    current_time = time.strftime("%m-%d-%Y %H:%M:%S")
+    draw_text(current_time, 50, SCREEN_HEIGHT - 30, font_size=18, color=DARK_YELLOW)
 
-    # Draw buttons
-    mouse_hover = is_mouse_hover(50, HEIGHT - 100, 200, 40)
-    draw_button(50, HEIGHT - 100, 200, 40, "Start GPS", hover=mouse_hover)
+    pygame.display.update()
 
-def draw_gps_screen():
-    draw_scanlines()
-    draw_glow_text("GPS: Searching...", 50, 20, font_size=24)
-    draw_text("Status: Not Locked", 50, 60, font_size=24)
-    draw_text("Press [1] for Main Screen", 250, HEIGHT - 60, font_size=24)
+# Function to handle the drawing of other screens (WIKI, GPS, RADIO)
+def draw_other_screens(screen_name):
+    screen.fill(BLACK)  # Fill with black for other screens
+    draw_text(screen_name, 50, 50, font_size=48, color=YELLOW)
+    pygame.display.update()
 
-def draw_wiki_screen():
-    draw_scanlines()
-    draw_glow_text("Offline Wiki: Ready", 50, 20, font_size=24)
-    draw_text("Press [1] for Main Screen", 250, HEIGHT - 60, font_size=24)
-
-def draw_radio_screen():
-    draw_scanlines()
-    draw_glow_text("Radio: Scanning...", 50, 20, font_size=24)
-    draw_text("Press [1] for Main Screen", 250, HEIGHT - 60, font_size=24)
-
+# Main function to handle screen transitions
 def main():
-    global current_screen
     clock = pygame.time.Clock()
+    running = True
+    current_screen = "STATUS"
 
-    while True:
-        screen.fill(BLACK)
-
-        # Draw the appropriate screen
-        if current_screen == MAIN_SCREEN:
-            draw_main_screen()
-        elif current_screen == GPS_SCREEN:
-            draw_gps_screen()
-        elif current_screen == WIKI_SCREEN:
-            draw_wiki_screen()
-        elif current_screen == RADIO_SCREEN:
-            draw_radio_screen()
-
-        pygame.display.flip()
-
+    while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            elif event.type == pygame.KEYDOWN:
-                # Switch screens based on key press
-                if event.key == pygame.K_1:  # Main screen
-                    fade_out()
-                    current_screen = MAIN_SCREEN
-                    fade_in()
-                elif event.key == pygame.K_2:  # GPS screen
-                    fade_out()
-                    current_screen = GPS_SCREEN
-                    fade_in()
-                elif event.key == pygame.K_3:  # Wiki screen
-                    fade_out()
-                    current_screen = WIKI_SCREEN
-                    fade_in()
-                elif event.key == pygame.K_4:  # Radio screen
-                    fade_out()
-                    current_screen = RADIO_SCREEN
-                    fade_in()
+                running = False
 
-        clock.tick(30)
+            # Handling tab navigation with TAB and SHIFT+TAB
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_TAB:
+                    if current_screen == "STATUS":
+                        current_screen = "WIKI"
+                    elif current_screen == "WIKI":
+                        current_screen = "GPS"
+                    elif current_screen == "GPS":
+                        current_screen = "RADIO"
+                    else:
+                        current_screen = "STATUS"
+                elif event.key == pygame.K_SHIFT:
+                    if current_screen == "STATUS":
+                        current_screen = "RADIO"
+                    elif current_screen == "WIKI":
+                        current_screen = "STATUS"
+                    elif current_screen == "GPS":
+                        current_screen = "WIKI"
+                    else:
+                        current_screen = "GPS"
+
+        # Draw the current screen
+        if current_screen == "STATUS":
+            draw_status_screen()
+        else:
+            draw_other_screens(current_screen)
+
+        clock.tick(60)  # Limit to 60 frames per second
+
+    pygame.quit()
 
 if __name__ == "__main__":
     main()
