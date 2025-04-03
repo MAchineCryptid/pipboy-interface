@@ -11,7 +11,6 @@ pygame.display.set_caption("Raspberry Pi Pip-Boy")
 
 # Colors
 GREEN = (57, 255, 20)  # Classic Pip-Boy green
-DARK_GREEN = (30, 180, 10)  # Slightly darker green for glow effect
 BLACK = (0, 0, 0)
 
 # Fonts
@@ -36,24 +35,6 @@ def draw_text(text, x, y, font_size=36, color=GREEN):
     rendered_text = font.render(text, True, color)
     screen_content.blit(rendered_text, (x, y))
 
-def draw_glow_text(text, x, y, font_size=36, glow_color=DARK_GREEN, alpha=100):
-    # Create a new surface for the glow effect with transparency (SRCALPHA for alpha channel)
-    glow_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)  
-    glow_surface.fill((0, 0, 0, 0))  # Start with a fully transparent surface
-    
-    # Draw the glow effect (text multiple times with small offsets)
-    for offset in range(3, 0, -1):  # Different offsets for the glow
-        glow_surface.blit(screen_content, (x + offset, y + offset))
-    
-    # Apply the transparency (alpha value) to the glow only
-    glow_surface.fill((glow_color[0], glow_color[1], glow_color[2], alpha))  # Alpha controls transparency
-    
-    # Draw the glow surface onto the screen content
-    screen_content.blit(glow_surface, (x, y))
-    
-    # Draw the main text (without transparency)
-    draw_text(text, x, y, font_size, color=GREEN)
-
 def fade_in():
     for alpha in range(0, 255, 5):  # Gradually increase alpha
         overlay = pygame.Surface((WIDTH, HEIGHT))
@@ -74,24 +55,24 @@ def fade_out():
 
 def draw_main_screen():
     screen_content.fill(BLACK)  # Clear the screen content surface
-    draw_glow_text("Raspberry Pi Pip-Boy", 250, 20, font_size=48)
+    draw_text("Raspberry Pi Pip-Boy", 250, 20, font_size=48)
     draw_text("System Status: Nominal", 250, 100, font_size=24)
     draw_text("Press [1] for GPS, [2] for Wiki, [3] for Radio", 250, HEIGHT - 60, font_size=24)
 
 def draw_gps_screen():
     screen_content.fill(BLACK)  # Clear the screen content surface
-    draw_glow_text("GPS: Searching...", 50, 20, font_size=24)
+    draw_text("GPS: Searching...", 50, 20, font_size=24)
     draw_text("Status: Not Locked", 50, 60, font_size=24)
     draw_text("Press [1] for Main Screen", 250, HEIGHT - 60, font_size=24)
 
 def draw_wiki_screen():
     screen_content.fill(BLACK)  # Clear the screen content surface
-    draw_glow_text("Offline Wiki: Ready", 50, 20, font_size=24)
+    draw_text("Offline Wiki: Ready", 50, 20, font_size=24)
     draw_text("Press [1] for Main Screen", 250, HEIGHT - 60, font_size=24)
 
 def draw_radio_screen():
     screen_content.fill(BLACK)  # Clear the screen content surface
-    draw_glow_text("Radio: Scanning...", 50, 20, font_size=24)
+    draw_text("Radio: Scanning...", 50, 20, font_size=24)
     draw_text("Press [1] for Main Screen", 250, HEIGHT - 60, font_size=24)
 
 def main():
